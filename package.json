@@ -1,0 +1,25 @@
+{
+  "name": "browsersync-learning",
+  "version": "1.0.0",
+  "description": "learning browsersync",
+  "main": "index.js",
+  "dependencies": {
+    "browser-sync": "^2.11.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "browser-sync start --server --files 'css/*.css'",
+    "bsync": "browser-sync start --server --files 'css/*.css'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jianglibo/browsersync-learning.git"
+  },
+  "author": "jianglibo@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jianglibo/browsersync-learning/issues"
+  },
+  "homepage": "https://github.com/jianglibo/browsersync-learning#readme"
+}
