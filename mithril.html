@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<header>
+<title>Todo app</title>
+<script src="bower_components/mithril/mithril.min.js"></script>
+<link href="extra/style.css" rel="stylesheet" />
+</header>
+<body>
+  <p>abcedef12ajjgdddd</p>
+  <div id="example" class="example output"></div>
+<script>
+
+//model
+var Page = {
+	list: function() {
+		return m.request({method: "GET", url: "pages.json"});
+	}
+};
+
+var Demo = {
+	//controller
+	controller: function() {
+		var pages = Page.list();
+		return {
+			pages: pages,
+			rotate: function() {
+				pages().push(pages().shift());
+			}
+		}
+	},
+
+	//view
+	view: function(ctrl) {
+		return m("div", [
+			ctrl.pages().map(function(page) {
+				return m("a", {href: page.url}, page.title);
+			}),
+			m("button", {onclick: ctrl.rotate}, "Rotate links")
+		]);
+	}
+};
+
+
+//initialize
+m.mount(document.getElementById("example"), Demo);
+</script>
+</body>
+</html>
