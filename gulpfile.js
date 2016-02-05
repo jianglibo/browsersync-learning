@@ -5,6 +5,9 @@ const watch = require('gulp-watch');
 var browserSync = require('browser-sync').create();
 var mockerLoader = require('./middleware/mocker-loader');
 
+var debug = require('gulp-debug');
+
+
 
 const sourcemaps = require('gulp-sourcemaps');
 const babel = require('gulp-babel');
@@ -56,24 +59,33 @@ gulp.task('mywatch', function() {
   gulp.watch(["*.html", "**/*.css"]).on('change', browserSync.reload);
 });
 
+gulp.task('cc', function() {
+  return gulp.src("js/*.js")
+    .pipe(concat('all.js'))
+    .pipe(gulp.dest('./dist/'));
+});
+
 // Static Server + watching scss/html files
 // gulp.task('serve', /*['sass'],*/ function() {
 gulp.task('serve', ['bs', 'mywatch'], function() {
   gulp.src('js/*.js')
+    .pipe(sourcemaps.init())
     .pipe(watch('js/*.js', {
       // read: false,
       events: ['add', 'change', 'unlink']
     })) // as a trigger.
     .pipe(through.obj(function(file, enc, cb) {
-      console.log(file);
-      cb(null, file);
+      console.log(file.event);
+      this.push(file);
+      cb();
     }))
-    .pipe(sourcemaps.init())
-    .pipe(babel({
-      presets: ['es2015']
-    }))
-    .pipe(concat('all.js'))
+    .pipe(debug({title: "before-babel:"}))
+    .pipe(babel())
+    .pipe(debug({title: "before-concat:"}))
+    // .pipe(concat('all.js'))
+    .pipe(debug({title: "before-sourcemaps:"}))
     .pipe(sourcemaps.write('.'))
+    .pipe(debug({title: "before-dist:"}))
     .pipe(gulp.dest('dist'));
 
   // return gulp.src('js/*.js')
