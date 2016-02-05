@@ -34,3 +34,4 @@ node_modules
 
 # Dependency directory
 bower_components
+dist
