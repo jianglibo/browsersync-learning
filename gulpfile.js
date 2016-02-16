@@ -3,16 +3,20 @@ var path = require('path');
 const through = require('through2');
 const watch = require('gulp-watch');
 var browserSync = require('browser-sync').create();
-var mockerLoader = require('./middleware/mocker-loader');
+var mockerLoader = require('./dev-lib/mocker-loader');
 var plumber = require('gulp-plumber');
-
+var entrySink = require('./dev-lib/entry-sink');
+var through2 = require('through2');
+var webpack = require('webpack-stream');
 var debug = require('gulp-debug');
-
+var eh = require('./dev-lib/entry-holder');
 
 
 const sourcemaps = require('gulp-sourcemaps');
 const babel = require('gulp-babel');
 const concat = require('gulp-concat');
+
+const entryjs = "app.js";
 
 // var sass = require('gulp-sass');
 
@@ -28,56 +32,38 @@ gulp.task('runBs', function() {
       // middleware: [require('./middleware/append2body')]
     }
   }, function(err, bs) {
-    bs.addMiddleware('', mockerLoader("mocks"), {
+    bs.addMiddleware('', mockerLoader("mocks", entryjs), {
       override: true
     });
-    // bs.addMiddleware('', require("./middleware/mock-central") , {
-    //   override: true
-    // });
-    // bs.addMiddleware('', function(req, res, next) {
-    //   if (mocks[req.url]) {
-    //     return mocks[req.url](req, res);
-    //   }
-    //   next();
-    // }, {
-    //   override: true
-    // });
   });
 });
 
-gulp.task('afterJsChange', function(){
-  gulp.src('js/*.js')
-    .pipe(sourcemaps.init())
-    .pipe(plumber())
-    // .pipe(through.obj(function(file, enc, cb) {
-    //   console.log(file.event);
-    //   this.push(file);
-    //   cb();
-    // }))
-    // .pipe(debug({title: "before-babel:"}))
-    .pipe(babel())
-    // .pipe(debug({title: "before-concat:"}))
-    .pipe(concat('all.js'))
-    // .pipe(debug({title: "before-sourcemaps:"}))
-    .pipe(sourcemaps.write('.'))
-    // .pipe(debug({title: "before-dist:"}))
-    .pipe(gulp.dest('dist'));
+gulp.task('stopBs', function() {
+  browserSync.exit();
 });
 
-// gulp.task('default', () =>
-//     gulp.src('src/**/*.js')
-//         .pipe(sourcemaps.init())
-//         .pipe(babel({
-//             presets: ['es2015']
-//         }))
-//         .pipe(concat('all.js'))
-//         .pipe(sourcemaps.write('.'))
-//         .pipe(gulp.dest('dist'))
-// );
+gulp.task('afterJsChange', function() {
+  gulp.src(['./dev-js/t.js'])
+    .pipe(plumber())
+    // .pipe(debug({title: "before-babel:"}))
+    .pipe(babel())
+    .pipe(webpack())
+    // .pipe(concat(entryjs))
+    .pipe(sourcemaps.init())
+    .pipe(sourcemaps.write('.'))
+    // .pipe(gulp.dest('dist'));
+    .pipe(entrySink(entryjs))
+    .pipe(through2.obj(function(file, enc, cb) {
+      cb(null, file);
+    }, function(cb) {
+      browserSync.reload();
+      cb();
+    }));
+});
 
 gulp.task('watch', function() {
-  gulp.watch(["*.html", "**/*.css"]).on('change', browserSync.reload);
-  gulp.watch(["js/*.js"], ["afterJsChange"]);
+  gulp.watch(["./*.html", "./dev-js/*.js"], ["afterJsChange"]);
+  gulp.watch(["./dev-lib/*.js", "./mocks/*.js"], ["stopBs", "runBs", "afterJsChange"]);
 });
 
 gulp.task('cc', function() {
@@ -90,7 +76,7 @@ gulp.task('cc', function() {
 // gulp-watch has problems.
 // Static Server + watching scss/html files
 // gulp.task('serve', /*['sass'],*/ function() {
-gulp.task('serve', ['runBs', 'watch'], function(cb) {
+gulp.task('serve', ['runBs', 'watch', 'afterJsChange'], function(cb) {
   console.log("started");
   cb();
   // return gulp.src('js/*.js')
