@@ -10,6 +10,8 @@ var through2 = require('through2');
 var webpack = require('webpack-stream');
 var debug = require('gulp-debug');
 var eh = require('./dev-lib/entry-holder');
+var Vfile = require('vinyl');
+var fs = require('fs');
 
 
 const sourcemaps = require('gulp-sourcemaps');
@@ -17,6 +19,8 @@ const babel = require('gulp-babel');
 const concat = require('gulp-concat');
 
 const entryjs = "app.js";
+
+const xmlhttprequestShim = path.join(process.cwd() , "shims", "xmlhttprequest.js");
 
 // var sass = require('gulp-sass');
 
@@ -46,8 +50,20 @@ gulp.task('afterJsChange', function() {
   gulp.src(['./dev-js/t.js'])
     .pipe(plumber())
     // .pipe(debug({title: "before-babel:"}))
-    .pipe(babel())
     .pipe(webpack())
+    .pipe(babel())
+    // .pipe(through2.obj(function(file, enc, cb) {
+    //   cb(null, file);
+    // }, function(cb) {
+    //   var f = new Vfile({
+    //     // cwd: "/",
+    //     // base: "/test/",
+    //     path: xmlhttprequestShim,
+    //     contents: fs.readFileSync(xmlhttprequestShim)
+    //   });
+    //   this.push(f);
+    //   cb();
+    // }))
     // .pipe(concat(entryjs))
     .pipe(sourcemaps.init())
     .pipe(sourcemaps.write('.'))
