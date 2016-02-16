@@ -122,3 +122,21 @@ gulp.task('serve', ['runBs', 'watch', 'afterJsChange'], function(cb) {
 // });
 
 gulp.task('default', ['serve']);
+
+gulp.task('wp', function() {
+  return gulp.src(['app/app.js'])
+    .pipe(named())
+    .pipe(webpack({
+      devtool: 'source-map'
+    }))
+    .pipe(sourcemaps.init({loadMaps: true}))
+    .pipe(through.obj(function (file, enc, cb) {
+      // Dont pipe through any source map files as it will be handled
+      // by gulp-sourcemaps
+      var isSourceMap = /\.map$/.test(file.path);
+      if (!isSourceMap) this.push(file);
+      cb();
+    }))
+    .pipe(sourcemaps.write('.'))
+    .pipe(gulp.dest('dist/'));
+});
