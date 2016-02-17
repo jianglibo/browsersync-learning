@@ -2,7 +2,7 @@
  * https://gist.github.com/Contra/2709462
  */
 
-module.exports = function() {
+(function(){
   var ct = function(id) {
     return new ActiveXObject(id);
   };
@@ -17,4 +17,4 @@ module.exports = function() {
     }
   }
   console.log("xmlhttprequestShim runed.");
-};
+})();

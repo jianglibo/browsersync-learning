@@ -1,5 +1,2 @@
 var sum = require('./m1');
-var xmlhttprequestShim = require('../shims/xmlhttprequest');
-
-xmlhttprequestShim();
-alert(sum(3, 4));
+document.getElementById("sum").innerHTML = sum(3,4);

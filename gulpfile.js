@@ -12,6 +12,10 @@ var debug = require('gulp-debug');
 var eh = require('./dev-lib/entry-holder');
 var Vfile = require('vinyl');
 var fs = require('fs');
+var concatCb = require('./dev-lib/concat-cb');
+var uglify = require('gulp-uglify');
+var hash = require('gulp-hash');
+var rename = require("gulp-rename");
 
 
 const sourcemaps = require('gulp-sourcemaps');
@@ -20,7 +24,7 @@ const concat = require('gulp-concat');
 
 const entryjs = "app.js";
 
-const xmlhttprequestShim = path.join(process.cwd() , "shims", "xmlhttprequest.js");
+const toPrepend = ["shims/xmlhttprequest.js", "node_modules/mithril/mithril.js"];
 
 // var sass = require('gulp-sass');
 
@@ -51,7 +55,7 @@ gulp.task('afterJsChange', function() {
     .pipe(plumber())
     // .pipe(debug({title: "before-babel:"}))
     .pipe(webpack())
-    .pipe(babel())
+    .pipe(babel()) //only one file.
     // .pipe(through2.obj(function(file, enc, cb) {
     //   cb(null, file);
     // }, function(cb) {
@@ -65,9 +69,20 @@ gulp.task('afterJsChange', function() {
     //   cb();
     // }))
     // .pipe(concat(entryjs))
+    //<!---- prepend my staff here --------->
+    .pipe(through2.obj(function(file,enc,cb){
+      //must only one file;
+      concatCb(toPrepend, function(buf){
+        file.contents = Buffer.concat([buf, file.contents]);
+        cb(null, file);
+      });
+    }))
+    .pipe(uglify())
+    // .pipe(rename(entryjs))
     .pipe(sourcemaps.init())
     .pipe(sourcemaps.write('.'))
     // .pipe(gulp.dest('dist'));
+    // .pipe(hash())
     .pipe(entrySink(entryjs))
     .pipe(through2.obj(function(file, enc, cb) {
       cb(null, file);
