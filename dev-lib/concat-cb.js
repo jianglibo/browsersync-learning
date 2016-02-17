@@ -1,4 +1,4 @@
-var gulp = require('gulp');
+var vfs = require('vinyl-fs');
 var through2 = require('through2');
 /**
  * @constructor
@@ -6,7 +6,7 @@ var through2 = require('through2');
  */
 module.exports = function(fnlist, done) {
   var buffers = [];
-  var pp = gulp.src(fnlist)
+  var pp = vfs.src(fnlist)
     .pipe(through2.obj(function(file, enc, cb) {
       buffers.push(file.contents);
       cb();
