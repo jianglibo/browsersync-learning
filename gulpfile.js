@@ -12,10 +12,11 @@ var debug = require('gulp-debug');
 var eh = require('./dev-lib/entry-holder');
 var Vfile = require('vinyl');
 var fs = require('fs');
-var concatCb = require('./dev-lib/concat-cb');
 var uglify = require('gulp-uglify');
 var hash = require('gulp-hash');
 var rename = require("gulp-rename");
+var merge2 = require('merge2');
+var gulpif = require('gulp-if');
 
 
 const sourcemaps = require('gulp-sourcemaps');
@@ -51,37 +52,17 @@ gulp.task('stopBs', function() {
 });
 
 gulp.task('afterJsChange', function() {
-  gulp.src(['./dev-js/t.js'])
-    .pipe(plumber())
-    // .pipe(debug({title: "before-babel:"}))
-    .pipe(webpack())
-    .pipe(babel()) //only one file.
-    // .pipe(through2.obj(function(file, enc, cb) {
-    //   cb(null, file);
-    // }, function(cb) {
-    //   var f = new Vfile({
-    //     // cwd: "/",
-    //     // base: "/test/",
-    //     path: xmlhttprequestShim,
-    //     contents: fs.readFileSync(xmlhttprequestShim)
-    //   });
-    //   this.push(f);
-    //   cb();
-    // }))
-    // .pipe(concat(entryjs))
-    //<!---- prepend my staff here --------->
-    .pipe(through2.obj(function(file,enc,cb){
-      //must only one file;
-      concatCb(toPrepend, function(buf){
-        file.contents = Buffer.concat([buf, file.contents]);
-        cb(null, file);
-      });
-    }))
-    .pipe(uglify())
-    // .pipe(rename(entryjs))
+  merge2(
+      gulp.src(toPrepend),
+      gulp.src(['./dev-js/t.js'])
+      .pipe(plumber())
+      // .pipe(debug({title: "before-babel:"}))
+      .pipe(webpack())
+      .pipe(babel())) //only one file
     .pipe(sourcemaps.init())
+    .pipe(concat(entryjs))
+    // .pipe(uglify())
     .pipe(sourcemaps.write('.'))
-    // .pipe(gulp.dest('dist'));
     // .pipe(hash())
     .pipe(entrySink(entryjs))
     .pipe(through2.obj(function(file, enc, cb) {
@@ -104,28 +85,11 @@ gulp.task('cc', function() {
     .pipe(gulp.dest('./build/'));
 });
 
-// gulp-watch has problems.
 // Static Server + watching scss/html files
 // gulp.task('serve', /*['sass'],*/ function() {
 gulp.task('serve', ['runBs', 'watch', 'afterJsChange'], function(cb) {
   console.log("started");
   cb();
-  // return gulp.src('js/*.js')
-  //         .pipe(gulp.dest('dist'))
-  //         .pipe(through.obj(function(file, enc, cb){
-  //           console.log('reach...........');
-  //           cb(null, file);
-  //         }));
-
-  // gulp.watch("app/scss/*.scss", ['sass']);
-  // gulp.watch(["*.html", "**/*.css"]).on('change', browserSync.reload);
-  // gulp.watch(["*.html", "**/*.css"]).on('change', function(co){
-  //   var f = path.relative(__dirname, co.path);
-  //   console.log(f);
-  //   console.log(co);
-  //   browserSync.reload();
-  //   // browserSync.reload(f + "");
-  // });
 });
 
 // Compile sass into CSS & auto-inject into browsers
@@ -144,8 +108,10 @@ gulp.task('wp', function() {
     .pipe(webpack({
       devtool: 'source-map'
     }))
-    .pipe(sourcemaps.init({loadMaps: true}))
-    .pipe(through.obj(function (file, enc, cb) {
+    .pipe(sourcemaps.init({
+      loadMaps: true
+    }))
+    .pipe(through.obj(function(file, enc, cb) {
       // Dont pipe through any source map files as it will be handled
       // by gulp-sourcemaps
       var isSourceMap = /\.map$/.test(file.path);
