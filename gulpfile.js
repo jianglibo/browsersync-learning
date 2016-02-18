@@ -60,7 +60,7 @@ gulp.task('afterJsChange', function() {
       gulp.src(['./dev-js/t.js'])
       .pipe(plumber())
       // .pipe(debug({title: "before-babel:"}))
-      .pipe(named())
+      // .pipe(named())
       .pipe(webpack( /*{ devtool: 'source-map' }*/ ))
       // .pipe(through2.obj(function(file, enc, cb) {
       //   // Dont pipe through any source map files as it will be handled
@@ -76,9 +76,11 @@ gulp.task('afterJsChange', function() {
     .pipe(sourcemaps.write('.'))
     // .pipe(hash())
     // .pipe(entrySink(entryjs))
+    .pipe(named(function(file){
+      return path.basename(file.path);
+    }))
     .pipe(through2.obj(function(file, enc, cb) { // got two file.
-      var fn = path.basename(file.path);
-      eh.push(wwwRoot + fn, file);
+      eh.push(wwwRoot + file.named, file);
       cb(null, file);
     }))
     .pipe(through2.obj(function(file, enc, cb) {
