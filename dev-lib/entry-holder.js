@@ -14,8 +14,8 @@ EntryHolder.prototype.push = function(fn, vfile) {
     this.hash[fn] = vfile;
 };
 
-EntryHolder.prototype.getBuffer = function(fn) {
-  var vfile = this.hash[path.basename(fn)];
+EntryHolder.prototype.getBuffer = function(fp) {
+  var vfile = this.hash[fp];
   if (vfile) {
     return vfile.contents;
   } else {

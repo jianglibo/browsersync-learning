@@ -5,7 +5,7 @@ var eh = require('./entry-holder');
 module.exports = function(app, entryjs) {
   var entryRoute = express.Router();
 
-  entryRoute.get("/" + entryjs, function(req, res) {
+  entryRoute.get(entryjs, function(req, res) {
     var buf = eh.getBuffer(req.path);
 
     if (buf) {
@@ -15,7 +15,7 @@ module.exports = function(app, entryjs) {
     }
   });
 
-  entryRoute.get("/" + entryjs + ".map", function(req, res) {
+  entryRoute.get(entryjs + ".map", function(req, res) {
     var buf = eh.getBuffer(req.path);
     if (buf) {
       res.send(buf);

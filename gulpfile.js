@@ -17,6 +17,8 @@ var hash = require('gulp-hash');
 var rename = require("gulp-rename");
 var merge2 = require('merge2');
 var gulpif = require('gulp-if');
+var named = require('vinyl-named');
+var eh = require('./dev-lib/entry-holder');
 
 
 const sourcemaps = require('gulp-sourcemaps');
@@ -24,6 +26,7 @@ const babel = require('gulp-babel');
 const concat = require('gulp-concat');
 
 const entryjs = "app.js";
+const wwwRoot = "/";
 
 const toPrepend = ["shims/xmlhttprequest.js", "node_modules/mithril/mithril.js"];
 
@@ -41,7 +44,7 @@ gulp.task('runBs', function() {
       // middleware: [require('./middleware/append2body')]
     }
   }, function(err, bs) {
-    bs.addMiddleware('', mockerLoader("mocks", entryjs), {
+    bs.addMiddleware('', mockerLoader("mocks", wwwRoot + entryjs), {
       override: true
     });
   });
@@ -57,14 +60,27 @@ gulp.task('afterJsChange', function() {
       gulp.src(['./dev-js/t.js'])
       .pipe(plumber())
       // .pipe(debug({title: "before-babel:"}))
-      .pipe(webpack())
+      .pipe(named())
+      .pipe(webpack( /*{ devtool: 'source-map' }*/ ))
+      // .pipe(through2.obj(function(file, enc, cb) {
+      //   // Dont pipe through any source map files as it will be handled
+      //   // by gulp-sourcemaps
+      //   var isSourceMap = /\.map$/.test(file.path);
+      //   if (!isSourceMap) this.push(file);
+      //   cb();
+      // }))
       .pipe(babel())) //only one file
-    .pipe(sourcemaps.init())
+    .pipe(sourcemaps.init( /* { loadMaps: true }*/ ))
     .pipe(concat(entryjs))
     // .pipe(uglify())
     .pipe(sourcemaps.write('.'))
     // .pipe(hash())
-    .pipe(entrySink(entryjs))
+    // .pipe(entrySink(entryjs))
+    .pipe(through2.obj(function(file, enc, cb) { // got two file.
+      var fn = path.basename(file.path);
+      eh.push(wwwRoot + fn, file);
+      cb(null, file);
+    }))
     .pipe(through2.obj(function(file, enc, cb) {
       cb(null, file);
     }, function(cb) {
@@ -101,23 +117,3 @@ gulp.task('serve', ['runBs', 'watch', 'afterJsChange'], function(cb) {
 // });
 
 gulp.task('default', ['serve']);
-
-gulp.task('wp', function() {
-  return gulp.src(['app/app.js'])
-    .pipe(named())
-    .pipe(webpack({
-      devtool: 'source-map'
-    }))
-    .pipe(sourcemaps.init({
-      loadMaps: true
-    }))
-    .pipe(through.obj(function(file, enc, cb) {
-      // Dont pipe through any source map files as it will be handled
-      // by gulp-sourcemaps
-      var isSourceMap = /\.map$/.test(file.path);
-      if (!isSourceMap) this.push(file);
-      cb();
-    }))
-    .pipe(sourcemaps.write('.'))
-    .pipe(gulp.dest('dist/'));
-});
